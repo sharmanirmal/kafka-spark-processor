@@ -10,7 +10,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 class KafkaProperties extends Serializable{
 
   val TOPIC = "polaris-signal-test"
-  val BROKERS = "dal-kafka-broker00-catdev.staging.walmart.com:9092, dal-kafka-broker01-catdev.staging.walmart.com:9092, dal-kafka-broker01-catdev.staging.walmart.com:9092"
+  val BROKERS = "my.borker.server:9092" //Give the list of all the brokers
   val PRODUCER = "SparkKafkaProducer"
 
   val CONSUMER = "SparkKafkaConsumer"
@@ -45,6 +45,4 @@ class KafkaProperties extends Serializable{
 
   }
 }
-
-
 
