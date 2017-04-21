@@ -20,6 +20,24 @@ import org.apache.kafka.common.serialization.StringSerializer
  */
 object SparkKafkaWriter {
 
+   /* This is for performance reason i.e. not to open a multiple connections to Kafka*/
+  object PlainKafkaProducerCache {
+    @transient private val producers = mutable.HashMap.empty[KafkaProperties, PlainKafkaProducer]
+
+    /**
+     * Retrieve a [[PlainKafkaProducer]] in the cache or create a new one
+     * @param producerConfig properties for a [[PlainKafkaProducer]]
+     * @return a [[PlainKafkaProducer]] already in the cache
+     */
+    def getProducer(producerConfig: KafkaProperties): PlainKafkaProducer = {
+      producers
+        .getOrElseUpdate(producerConfig, new PlainKafkaProducer(producerConfig))
+        .asInstanceOf[PlainKafkaProducer]
+    }
+  }
+
+  val producerCache = PlainKafkaProducerCache
+
   def main(args: Array[String]): Unit = {
 
     val spark = SparkSession
@@ -45,8 +63,8 @@ object SparkKafkaWriter {
 
     /*publish message code*/
     val publishMsg = udf((inStr1: String, inStr2: String) => {
-      val producerInst = PlainKafkaProducer(inStr1, inStr2)
-      producerInst.produceRecords
+      val producerInst = producerCache.getProducer(kafkaProps)
+      producerInst.produceRecords(inStr1, inStr2)
       0
     })
 
@@ -64,10 +82,9 @@ object SparkKafkaWriter {
     distData.show()
 
     val processedData = distData.rdd.map ( x => {
-      val producerInst = PlainKafkaProducer(x.getAs[Int](0), x.getAs[String](1))
-      (x.getAs[Int](0), x.getAs[String](1), producerInst.produceRecords)
+      val producerInst = producerCache.getProducer(kafkaProps)
+      (x.getAs[Int](0), x.getAs[String](1), producerInst.produceRecords(x.getAs[Int](0), x.getAs[String](1)))
     }).toDF("key", "value", "result")
-
 
     processedData.write.mode(SaveMode.Overwrite).parquet(path)
     */

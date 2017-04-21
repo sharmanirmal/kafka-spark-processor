@@ -36,12 +36,12 @@ object PlainKafkaProducer extends App{
 }*/
 
 /*Spark based kafka producer implementation */
-case class PlainKafkaProducer(key: String, value : String){
+
+case class PlainKafkaProducer(val kafkaProperties: KafkaProperties){
 
 
-  def produceRecords : Int = {
-
-    val kafkaProperties = new KafkaProperties
+  def produceRecords(key: String, value : String) : Int = {
+    
     val  props = kafkaProperties.kafkaProducerProp()
     val t = System.currentTimeMillis()
 
@@ -60,3 +60,4 @@ case class PlainKafkaProducer(key: String, value : String){
 
 
 }
+
